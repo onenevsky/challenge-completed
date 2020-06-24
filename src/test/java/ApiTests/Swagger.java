@@ -1,10 +1,14 @@
 package ApiTests;
 
+import com.jayway.jsonpath.JsonPath;
 import com.jayway.restassured.http.ContentType;
+import com.jayway.restassured.response.Response;
 import org.junit.Test;
 
 import static com.jayway.restassured.RestAssured.given;
 import com.jayway.restassured.http.ContentType;;
+import static com.jayway.restassured.RestAssured.when;
+import static com.jayway.restassured.path.json.JsonPath.from;
 import static org.hamcrest.Matchers.*;
 public class Swagger {
 
@@ -43,12 +47,12 @@ public class Swagger {
                 "  \"username\": \"string\"\n" +
                 "}";
 
-        given()
+        given().contentType(ContentType.JSON)
                 .body(requestBody)
                 .when()
                 .post(APIUrl + "/clients")
                 .then()
-                .contentType(ContentType.JSON)
+                //.contentType(ContentType.JSON)
                 .statusCode(200).log().all()
                 .body(notNullValue());
     }
@@ -66,10 +70,16 @@ public class Swagger {
 
     @Test
     public void checkHelloMessageForAuthorizedUser() {
-        given().header("X-Session-Id", "f9c09c68-b0be-48d6-9812-1565798f45f5").
+        String requestBody = "{\"username\":\"string\"}";
+        Response response = given().contentType(ContentType.JSON).body(requestBody).when().post(APIUrl + "/login");
+        String session = response.getHeader("X-Session-Id");
+        System.out.println(session);
+
+        given().header("X-Session-Id", session).
                 when().
                 get(APIUrl + "/hello")
-                .then().contentType(ContentType.JSON)
+                .then()
+                .contentType(ContentType.JSON)
                 .statusCode(200).log().all()
                 .body("resultCode", is("Ok"), "message", is("Hello, string!"));
     }
